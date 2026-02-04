@@ -43,19 +43,25 @@ let deleteIndex = null;
 let deleteType  = null;
 
 /* ===== PROVEEDORES GLOBALES ===== */
-let providers = JSON.parse(localStorage.providers || "[]");
-let providerFilter = new Set(); // múltiples proveedores
 
-if(providers.length === 0){
-  providers = [
-    "Diemar",
-    "Estrella Damm",
-    "Bgrup",
-    "Pascual",
-    "Mercadona"
-    "Bonarea"
-  ];
-}
+// proveedores base del sistema
+const baseProviders = [
+  "Diemar",
+  "Estrella Damm",
+  "Bgrup",
+  "Pascual",
+  "Mercadona"
+];
+
+// proveedores guardados
+let providers = JSON.parse(localStorage.providers || "[]");
+
+// unir sin duplicados
+providers = [...new Set([...baseProviders, ...providers])];
+
+// filtro múltiple
+let providerFilter = new Set();
+
 
 /* ===== ORDEN INTELIGENTE ===== */
 function parseQty(name){ const m = name.match(/([\d,.]+)/); return m ? parseFloat(m[1].replace(',', '.')) : null; }
