@@ -93,9 +93,13 @@ function render(){
   list.innerHTML = items
 .filter(i => {
 
-  const inCat = i.cat === activeCat;
+  const qActive = q.length > 0;
 
-  if(!inCat) return false;
+// ✅ si hay búsqueda → ignoramos categoría
+if(!qActive){
+  if(i.cat !== activeCat) return false;
+}
+
 
 // ✅ filtro multi proveedor
 if(providerFilter.size > 0){
