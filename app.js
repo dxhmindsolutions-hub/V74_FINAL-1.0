@@ -38,6 +38,12 @@ const categories = [
 
 let activeCat = categories[0];
 let items = JSON.parse(localStorage.items || "[]");
+items.forEach(i => {
+  i.suppliers ??= [];
+  i.mainSupplier ??= 0;
+  i.note ??= "";
+});
+
 let cart  = JSON.parse(localStorage.cart  || "[]");
 let deleteIndex = null;
 let deleteType  = null;
@@ -185,13 +191,19 @@ function editItem(index){
       ${categories.map(c => `<option ${c===item.cat?'selected':''}>${c}</option>`).join("")}
     </select>
 
-    <p>Añadir proveedor</p>
-    <select id="providerSelect">
-      <option value="">-- seleccionar --</option>
-      ${providers.map(p => `<option>${p}</option>`).join("")}
-    </select>
-    <input id="providerCost" type="number" step="0.01" placeholder="Precio">
-    <button id="addProvider">➕ Añadir proveedor</button>
+<p>Añadir proveedor</p>
+
+<select id="providerSelect">
+  <option value="">-- seleccionar --</option>
+  ${providers.map(p => `<option>${p}</option>`).join("")}
+</select>
+
+<input id="providerNew" placeholder="o escribir proveedor nuevo">
+
+<input id="providerCost" type="number" step="0.01" placeholder="Precio">
+
+<button id="addProvider">➕ Añadir proveedor</button>
+
 
     <p>Proveedores del artículo</p>
     <ul id="providerList">
@@ -220,39 +232,67 @@ function editItem(index){
   document.body.appendChild(m);
 
   // ✅ Botón Añadir proveedor
-  m.querySelector("#addProvider").onclick = () => {
-    const name = m.querySelector("#providerSelect").value.trim();
-    const cost = parseFloat(m.querySelector("#providerCost").value);
+m.querySelector("#addProvider").onclick = () => {
 
-    if(!name) return alert("Selecciona un proveedor");
-    if(isNaN(cost)) return alert("Introduce un precio válido");
+  const selectName = m.querySelector("#providerSelect").value.trim();
+  const newName    = m.querySelector("#providerNew").value.trim();
 
-    item.suppliers.push({ name, cost });
+  const name = newName || selectName;
 
-    // Añadir a la lista global si es nuevo
-    if(!providers.includes(name)) providers.push(name);
+  const cost = parseFloat(m.querySelector("#providerCost").value);
 
-    // Limpiar inputs
-    m.querySelector("#providerSelect").value = "";
-    m.querySelector("#providerCost").value = "";
+  if(!name) return alert("Selecciona o escribe proveedor");
+  if(isNaN(cost)) return alert("Introduce precio válido");
 
-    // Actualizar lista de proveedores en el modal sin cerrar
-    const ul = m.querySelector("#providerList");
-    ul.innerHTML = item.suppliers.map((s,i)=>`
-      <li>
-        ${s.name} — ${s.cost.toFixed(2)} €
-        <button class="remove-provider" data-index="${i}">✕</button>
-      </li>
-    `).join("");
+// ❗ evitar duplicados
+if(item.suppliers.some(s => s.name === name)){
+  alert("Proveedor ya añadido");
+  return;
+}
 
-    // Reasignar eventos para eliminar
-    ul.querySelectorAll(".remove-provider").forEach(btn=>{
-      btn.onclick = () => {
-        item.suppliers.splice(btn.dataset.index, 1);
-        editItem(index); // reabre el modal actualizado
-      };
-    });
-  };
+// añadir proveedor
+item.suppliers.push({ name, cost });
+
+// proveedor principal = más barato
+item.mainSupplier =
+  item.suppliers
+    .map(s => s.cost)
+    .indexOf(Math.min(...item.suppliers.map(s => s.cost)));
+
+  
+  // añadir a lista global si es nuevo
+  if(!providers.includes(name)){
+    providers.push(name);
+  }
+
+  // limpiar campos
+  m.querySelector("#providerSelect").value = "";
+  m.querySelector("#providerNew").value = "";
+  m.querySelector("#providerCost").value = "";
+
+  // refrescar lista visual
+  const ul = m.querySelector("#providerList");
+  ul.innerHTML = item.suppliers.map((s,i)=>`
+    <li>
+      ${s.name} — ${s.cost.toFixed(2)} €
+      <button class="remove-provider" data-index="${i}">✕</button>
+    </li>
+  `).join("");
+
+  ul.querySelectorAll(".remove-provider").forEach(btn=>{
+    btn.onclick = () => {
+const idx = Number(btn.dataset.index);
+item.suppliers.splice(idx,1);
+
+if(item.mainSupplier >= item.suppliers.length){
+  item.mainSupplier = 0;
+}
+
+      editItem(index);
+    };
+  });
+
+};
 
   // ✅ Botón Cancelar
   m.querySelector("#cancel").onclick = () => m.remove();
@@ -275,13 +315,18 @@ function editItem(index){
   };
 
   // Asignar eventos de eliminar proveedores existentes
-  m.querySelectorAll(".remove-provider").forEach(btn=>{
-    btn.onclick = () => {
-      item.suppliers.splice(btn.dataset.index, 1);
-      editItem(index); // reabre el modal actualizado
-    };
-  });
-}
+ m.querySelectorAll(".remove-provider").forEach(btn=>{
+  btn.onclick = () => {
+    const idx = Number(btn.dataset.index);
+    item.suppliers.splice(idx,1);
+
+    if(item.mainSupplier >= item.suppliers.length){
+      item.mainSupplier = 0;
+    }
+
+    editItem(index);
+  };
+});
 
 
 /* ===== NUEVO ARTÍCULO ===== */
@@ -512,9 +557,9 @@ function openProviderFilter(){
 /* ===== INICIAL ===== */
 if(items.length===0){
   items = [
-    {name:"Agua 50cl",cat:"Aguas y refrescos"},
-    {name:"Agua 1,25 litros",cat:"Aguas y refrescos"},
-    {name:"Coca Cola",cat:"Aguas y refrescos"}
+    {name:"Agua 50cl",cat:"Aguas y refrescos", suppliers:[], mainSupplier:0, note:""},
+    {name:"Agua 1,25 litros",cat:"Aguas y refrescos", suppliers:[], mainSupplier:0, note:""},
+    {name:"Coca Cola",cat:"Aguas y refrescos", suppliers:[], mainSupplier:0, note:""}
   ];
 }
 
@@ -529,10 +574,12 @@ search.addEventListener("input", render);
 
 /* ===== EXPORTAR / IMPORTAR ===== */
 function exportData(){
-  const data = {
-    items,
-    cart
-  };
+const data = {
+  items,
+  cart,
+  providers
+};
+
   const blob = new Blob(
     [JSON.stringify(data, null, 2)],
     { type: "application/json" }
@@ -553,13 +600,25 @@ function importData(event){
   reader.onload = e => {
     try{
       const data = JSON.parse(e.target.result);
-      if(data.items && data.cart){
-        items = data.items;
-        cart  = data.cart;
-        localStorage.items = JSON.stringify(items);
-        localStorage.cart  = JSON.stringify(cart);
-        render();
-        alert("Copia restaurada correctamente ✅");
+  if(data.items && data.cart){
+  providers = data.providers || providers;
+  items = data.items;
+  cart  = data.cart;
+
+// ✅ NORMALIZAR ITEMS IMPORTADOS
+items.forEach(i => {
+  i.suppliers ??= [];
+  i.mainSupplier ??= 0;
+  i.note ??= "";
+});
+
+  localStorage.providers = JSON.stringify(providers);
+  localStorage.items = JSON.stringify(items);
+  localStorage.cart  = JSON.stringify(cart);
+  render();
+  alert("Copia restaurada correctamente ✅");
+}
+
       } else {
         alert("Archivo inválido ⚠️");
       }
