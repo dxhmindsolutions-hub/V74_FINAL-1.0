@@ -328,6 +328,7 @@ if(item.mainSupplier >= item.suppliers.length){
   };
 });
 
+}
 
 /* ===== NUEVO ARTÍCULO ===== */
 function showAddItem(){
@@ -597,37 +598,43 @@ function importData(event){
   if(!file) return;
 
   const reader = new FileReader();
+
   reader.onload = e => {
-    try{
+    try {
       const data = JSON.parse(e.target.result);
-  if(data.items && data.cart){
-  providers = data.providers || providers;
-  items = data.items;
-  cart  = data.cart;
 
-// ✅ NORMALIZAR ITEMS IMPORTADOS
-items.forEach(i => {
-  i.suppliers ??= [];
-  i.mainSupplier ??= 0;
-  i.note ??= "";
-});
+      if(data.items && data.cart){
 
-  localStorage.providers = JSON.stringify(providers);
-  localStorage.items = JSON.stringify(items);
-  localStorage.cart  = JSON.stringify(cart);
-  render();
-  alert("Copia restaurada correctamente ✅");
-}
+        providers = data.providers || providers;
+        items = data.items;
+        cart  = data.cart;
+
+        // normalizar
+        items.forEach(i => {
+          i.suppliers ??= [];
+          i.mainSupplier ??= 0;
+          i.note ??= "";
+        });
+
+        localStorage.providers = JSON.stringify(providers);
+        localStorage.items = JSON.stringify(items);
+        localStorage.cart  = JSON.stringify(cart);
+
+        render();
+        alert("Copia restaurada correctamente ✅");
 
       } else {
         alert("Archivo inválido ⚠️");
       }
+
     } catch {
       alert("Error al leer el archivo ⚠️");
     }
   };
+
   reader.readAsText(file);
 }
+
 function removeProvider(itemIndex, supplierIndex){
   items[itemIndex].suppliers.splice(supplierIndex,1);
   render();
