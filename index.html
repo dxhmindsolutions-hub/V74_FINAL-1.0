@@ -80,6 +80,11 @@
     font-weight:500;
     display:inline-block;
   }
+  
+  .smallBtn.green{
+  background:#43a047;
+  color:#fff;
+}
 
   /* Botón añadir artículo destacado */
   .highlightBtn{
@@ -387,7 +392,7 @@ strong {
         <button onclick="exportData()" class="smallBtn">💾 Exportar</button>
         <button onclick="document.getElementById('importFile').click()" class="smallBtn">📂 Importar</button>
         <input type="file" id="importFile" style="display:none" onchange="importData(event)">
-       <button id="addItemBtn" class="smallBtn" onclick="showAddItem()">➕ Añadir artículo</button>
+      <button id="addItemBtn" class="smallBtn green" onclick="showAddItem()">➕ Añadir artículo</button>
       </div>
     </div>
 
