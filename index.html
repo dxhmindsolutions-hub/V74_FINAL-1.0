@@ -177,13 +177,25 @@
     justify-content:center;
     z-index:60;
   }
-  .modal .box{
-    background:#fff;
-    border-radius:16px;
-    padding:20px;
-    width:90%;
-    max-width:360px;
-  }
+ .modal .box{
+  background:#fff;
+  border-radius:16px;
+  padding:20px;
+
+  width:95%;
+  max-width:520px;
+
+  max-height:90vh;
+  overflow-y:auto;
+}
+/* botones siempre visibles abajo del modal */
+.modal .box > div:last-child{
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  padding-top: 12px;
+}
+
   .modal input,
   .modal select,
   .modal textarea{
@@ -223,10 +235,16 @@
   }
   .btns button.active{ background:#000; color:#fff; }
   .modal .box > div:last-child{
-    display:flex;
-    gap:8px;
-    margin-top:16px;
-  }
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  padding-top: 12px;
+
+  display:flex;
+  gap:8px;
+  margin-top:16px;
+}
+
   .modal #add,
   .modal #save,
   .modal #send{ background:#43a047; color:#fff }
@@ -340,6 +358,12 @@ strong {
   font-weight:600;
   cursor:pointer;
 }
+
+  #providerList{
+  max-height:160px;
+  overflow-y:auto;
+}
+
 
 </style>
 </head>
